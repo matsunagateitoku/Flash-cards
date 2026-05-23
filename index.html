@@ -232,6 +232,16 @@ button.miss:hover   { background: #fae8e8; }
 #end-panel .btns { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
 
 footer { margin-top: 2rem; font-family: 'DM Mono', monospace; font-size: .72rem; color: #b0a898; letter-spacing: .06em; text-align: center; }
+
+/* ── Category toggle ── */
+.cat-section-wrap { width: 100%; max-width: 720px; margin-bottom: .6rem; }
+.cat-toggle {
+  border: none; background: none; padding: .2rem 0; font-family: 'DM Mono', monospace;
+  font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; color: #8a8278;
+  cursor: pointer; transition: color .13s;
+}
+.cat-toggle:hover { color: #3a3428; border: none; }
+.cat-toggle.open  { color: #9a7820; }
 </style>
 </head>
 <body class="bin-all">
@@ -642,6 +652,15 @@ document.addEventListener("keydown", function(e) {
   if (e.key === "3" && flipped) mark("miss");
   if (e.key === "l" || e.key === "L") toggleDrawer();
 });
+
+function toggleCats() {
+  const sec = document.getElementById("cat-section");
+  const btn = document.getElementById("cat-toggle");
+  const open = sec.style.display === "none";
+  sec.style.display = open ? "" : "none";
+  btn.textContent   = (open ? "▲" : "▼") + " filter by category";
+  btn.classList.toggle("open", open);
+}
 
 deck = shuffle([...ALL]);
 render();
