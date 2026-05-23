@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laws, Principles & Cognitive Biases — Flash Cards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh; background: #0e0e0f; color: #f0ede6;
+  font-family: 'Playfair Display', Georgia, serif;
+  display: flex; flex-direction: column; align-items: center; padding: 0 1rem 3rem;
+}
+
+/* ── Top bar ── */
+.top-bar {
+  width: 100%; max-width: 720px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.4rem 0 .6rem;
+  border-bottom: 1px solid #1a1a18;
+  margin-bottom: .8rem;
+}
+.top-bar h1 {
+  font-family: 'Playfair Display', serif; font-weight: 400;
+  font-size: clamp(1rem, 2.5vw, 1.35rem); letter-spacing: .07em;
+}
+.top-bar-right { display: flex; align-items: center; gap: .8rem; }
+.total-badge {
+  font-family: 'DM Mono', monospace; font-size: .63rem;
+  letter-spacing: .07em; color: #504840;
+}
+
+/* ── Bin tabs ── */
+.bin-nav {
+  width: 100%; max-width: 720px;
+  display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .6rem;
+}
+.bin-tab {
+  flex: 1; min-width: 0; background: transparent; border: 1px solid #2a2820;
+  border-radius: 3px; padding: .5rem .35rem .42rem;
+  cursor: pointer; text-align: center; transition: all .15s;
+}
+.bin-tab:hover { border-color: #4a4030; }
+.bin-tab .tab-name {
+  font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .07em;
+  text-transform: uppercase; display: block; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.bin-tab .tab-count { font-family: 'DM Mono', monospace; font-size: .72rem; display: block; margin-top: .2rem; }
+.bin-tab[data-bin="know"]    .tab-name  { color: #6aad7e; }
+.bin-tab[data-bin="know"]    .tab-count { color: #4a7c59; }
+.bin-tab[data-bin="sort-of"] .tab-name  { color: #c8a84b; }
+.bin-tab[data-bin="sort-of"] .tab-count { color: #7a6030; }
+.bin-tab[data-bin="miss"]    .tab-name  { color: #b06060; }
+.bin-tab[data-bin="miss"]    .tab-count { color: #6a3535; }
+.bin-tab[data-bin="all"]     .tab-name  { color: #9a9080; }
+.bin-tab[data-bin="all"]     .tab-count { color: #706858; }
+.bin-tab.active-tab[data-bin="know"]    { background: #0e1f12; border-color: #4a7c59; }
+.bin-tab.active-tab[data-bin="sort-of"] { background: #1a160a; border-color: #c8a84b; }
+.bin-tab.active-tab[data-bin="miss"]    { background: #1a0e0e; border-color: #b06060; }
+.bin-tab.active-tab[data-bin="all"]     { background: #141412; border-color: #706858; }
+
+/* ── Category filter ── */
+.cat-section { width: 100%; max-width: 720px; margin-bottom: .8rem; }
+.cat-group-label {
+  font-family: 'DM Mono', monospace; font-size: .56rem; letter-spacing: .1em;
+  text-transform: uppercase; color: #3a3830; margin-bottom: .35rem; margin-top: .55rem;
+}
+.cat-row { display: flex; gap: .3rem; flex-wrap: wrap; }
+.cat-chip {
+  font-family: 'DM Mono', monospace; font-size: .58rem; letter-spacing: .06em;
+  text-transform: uppercase; padding: .22rem .6rem;
+  border: 1px solid #2a2820; border-radius: 20px;
+  background: transparent; cursor: pointer; color: #706858; transition: all .13s;
+  white-space: nowrap;
+}
+.cat-chip:hover { border-color: #706858; color: #9a9080; }
+.cat-chip.active-cat { border-color: #c8a84b; color: #c8a84b; background: #1a160a; }
+.cat-chip.type-law   { border-color: #2a3020; color: #607050; }
+.cat-chip.type-law:hover { border-color: #607050; color: #88a870; }
+.cat-chip.type-law.active-cat { border-color: #88a870; color: #88a870; background: #111a0e; }
+.cat-chip.type-bias  { border-color: #20202a; color: #506070; }
+.cat-chip.type-bias:hover { border-color: #506070; color: #7090a8; }
+.cat-chip.type-bias.active-cat { border-color: #7090a8; color: #7090a8; background: #0e1015; }
+
+/* ── Deck info bar ── */
+.deck-bar {
+  width: 100%; max-width: 720px;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: .8rem;
+}
+.deck-bar .mode-lbl { font-family: 'DM Mono', monospace; font-size: .64rem; color: #9a9080; letter-spacing: .06em; }
+.deck-bar .pos-lbl  { font-family: 'DM Mono', monospace; font-size: .64rem; color: #504840; }
+
+/* ── Progress ── */
+.progress-bar { width: 100%; max-width: 720px; height: 2px; background: #1e1c1a; border-radius: 1px; overflow: hidden; margin-bottom: 1rem; }
+.progress-fill { height: 100%; background: #c8a84b; transition: width .3s ease; border-radius: 1px; }
+.progress-fill.green  { background: #4a7c59; }
+.progress-fill.yellow { background: #c8a84b; }
+.progress-fill.red    { background: #7a3030; }
+.progress-fill.blue   { background: #4a6070; }
+
+/* ── Card ── */
+.scene {
+  width: 100%; max-width: 720px; perspective: 1200px; cursor: pointer;
+  display: flex; align-items: center; min-height: 290px;
+}
+.card-inner {
+  width: 100%; min-height: 290px; position: relative;
+  transform-style: preserve-3d; transition: transform .5s cubic-bezier(.4,0,.2,1);
+}
+.card-inner.flipped { transform: rotateY(180deg); }
+.face {
+  position: absolute; inset: 0; min-height: 290px; border: 1px solid #2a2820;
+  border-radius: 4px; display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  padding: 2.2rem 3rem; text-align: center;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.face.front { background: #141412; }
+.face.back  { background: #161714; transform: rotateY(180deg); }
+.face::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  border-radius: 4px 4px 0 0; background: transparent; transition: background .3s;
+}
+body.bin-know    .face::before { background: #4a7c59; }
+body.bin-sort-of .face::before { background: #c8a84b; }
+body.bin-miss    .face::before { background: #7a3030; }
+
+.face-label { font-family: 'DM Mono', monospace; font-size: .6rem; color: #4a4640; letter-spacing: .1em; text-transform: uppercase; }
+.card-meta {
+  display: flex; gap: .5rem; align-items: center; margin-bottom: .55rem; flex-wrap: wrap; justify-content: center;
+}
+.card-cat  { font-family: 'DM Mono', monospace; font-size: .57rem; letter-spacing: .07em; color: #504840; text-transform: uppercase; }
+.card-type-badge {
+  font-family: 'DM Mono', monospace; font-size: .52rem; letter-spacing: .07em;
+  text-transform: uppercase; padding: .1rem .4rem; border-radius: 2px; border: 1px solid;
+}
+.card-type-badge.law  { color: #607050; border-color: #2a3020; }
+.card-type-badge.bias { color: #506070; border-color: #20202a; }
+.divider { width: 36px; height: 1px; background: #2e2c28; margin: .8rem auto; }
+.term { font-family: 'Playfair Display', serif; font-size: clamp(1.15rem,3.5vw,1.9rem); font-weight: 700; color: #f0ede6; line-height: 1.2; }
+.definition { font-family: 'Playfair Display', serif; font-size: clamp(.83rem,1.8vw,.96rem); font-style: italic; color: #c8c0b0; line-height: 1.78; }
+.bin-indicator { margin-top: .8rem; font-family: 'DM Mono', monospace; font-size: .59rem; letter-spacing: .08em; display: none; align-items: center; gap: .4rem; }
+.bin-indicator.visible { display: flex; }
+.pip { width: 6px; height: 6px; border-radius: 50%; }
+.pip.green  { background: #4a7c59; }
+.pip.yellow { background: #c8a84b; }
+.pip.red    { background: #b06060; }
+.card-num { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 700; color: #1a1a18; position: absolute; bottom: .8rem; right: 1.2rem; line-height: 1; user-select: none; }
+
+@keyframes slideL { to { opacity:0; transform:translateX(-28px); } }
+@keyframes slideR { to { opacity:0; transform:translateX( 28px); } }
+.slide-left  { animation: slideL .2s ease forwards; }
+.slide-right { animation: slideR .2s ease forwards; }
+
+.hint { font-family: 'DM Mono', monospace; font-size: .58rem; color: #252320; letter-spacing: .07em; text-transform: uppercase; margin-top: .55rem; }
+
+/* ── Buttons ── */
+.controls { display: flex; gap: .55rem; margin-top: 1rem; flex-wrap: wrap; justify-content: center; }
+button {
+  background: transparent; border: 1px solid #2e2c28; color: #c8c0b0;
+  padding: .48rem .95rem; font-family: 'DM Mono', monospace; font-size: .66rem;
+  letter-spacing: .09em; cursor: pointer; border-radius: 2px; transition: all .15s; text-transform: uppercase;
+}
+button:hover   { border-color: #c8a84b; color: #c8a84b; }
+button:disabled { opacity: .2; pointer-events: none; }
+button.primary { background: #c8a84b; border-color: #c8a84b; color: #0e0e0f; }
+button.primary:hover { background: #d4b86a; }
+button.know   { border-color: #4a7c59; color: #6aad7e; }
+button.know:hover   { background: #0e1f12; }
+button.sortof { border-color: #7a6030; color: #c8a84b; }
+button.sortof:hover { background: #1a160a; }
+button.miss   { border-color: #5a2a2a; color: #b06060; }
+button.miss:hover   { background: #1a0e0e; }
+
+/* ── Drawer ── */
+.bin-drawer {
+  width: 100%; max-width: 720px; margin-top: 1rem; border: 1px solid #2a2820;
+  border-radius: 4px; background: #0f0f0e; overflow: hidden; display: none;
+}
+.bin-drawer.open { display: block; }
+.drawer-header {
+  padding: .6rem 1rem; border-bottom: 1px solid #1a1a18;
+  display: flex; justify-content: space-between; align-items: center; gap: .6rem;
+}
+.drawer-title { font-family: 'DM Mono', monospace; font-size: .64rem; letter-spacing: .1em; text-transform: uppercase; color: #9a9080; }
+.drawer-search {
+  flex: 1; background: #141412; border: 1px solid #2a2820; border-radius: 2px;
+  padding: .3rem .6rem; font-family: 'DM Mono', monospace; font-size: .64rem;
+  color: #c8c0b0; outline: none; letter-spacing: .04em;
+}
+.drawer-search:focus { border-color: #4a4030; }
+.drawer-search::placeholder { color: #3a3830; }
+.drawer-close { background: none; border: none; color: #4a4640; font-size: 1rem; cursor: pointer; padding: 0 .2rem; line-height: 1; flex-shrink: 0; }
+.drawer-close:hover { color: #f0ede6; border: none; }
+.bin-list { max-height: 280px; overflow-y: auto; padding: .3rem 0; }
+.bin-list::-webkit-scrollbar { width: 4px; }
+.bin-list::-webkit-scrollbar-track { background: #0f0f0e; }
+.bin-list::-webkit-scrollbar-thumb { background: #2a2820; border-radius: 2px; }
+.bin-item {
+  display: flex; align-items: center; gap: .6rem; padding: .4rem 1rem; cursor: pointer;
+  transition: background .1s; border: none; background: none; width: 100%; text-align: left;
+  color: #f0ede6; letter-spacing: normal; text-transform: none;
+  font-family: 'Playfair Display', Georgia, serif; font-size: .85rem;
+}
+.bin-item:hover { background: #1a1a18; border: none; color: #f0ede6; }
+.bin-item.current-card { background: #1e1c18; }
+.item-pip  { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.item-num  { font-family: 'DM Mono', monospace; font-size: .57rem; color: #4a4640; min-width: 1.5rem; flex-shrink: 0; }
+.item-cat  { font-family: 'DM Mono', monospace; font-size: .54rem; color: #3a3630; margin-left: auto; padding-left: .5rem; white-space: nowrap; flex-shrink: 0; }
+.item-type { font-family: 'DM Mono', monospace; font-size: .5rem; padding: .08rem .3rem; border-radius: 2px; border: 1px solid; flex-shrink: 0; }
+.item-type.law  { color: #506040; border-color: #253015; }
+.item-type.bias { color: #405060; border-color: #152030; }
+.bin-section-head {
+  padding: .25rem 1rem .15rem; font-family: 'DM Mono', monospace; font-size: .56rem;
+  letter-spacing: .1em; text-transform: uppercase; color: #383630;
+  border-top: 1px solid #181816; margin-top: .15rem;
+}
+.bin-section-head:first-child { border-top: none; margin-top: 0; }
+
+/* ── End panel ── */
+#end-panel {
+  display: none; margin-top: 1.2rem; border: 1px solid #2a2820; border-radius: 4px;
+  padding: 1.2rem 1.6rem; max-width: 520px; width: 100%; text-align: center; background: #141412;
+}
+#end-panel h2 { font-size: 1rem; font-weight: 400; margin-bottom: .3rem; }
+#end-panel .ep-sub { font-family: 'DM Mono', monospace; font-size: .62rem; color: #706858; margin-bottom: .9rem; }
+#end-panel .btns { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; }
+
+footer { margin-top: 2rem; font-family: 'DM Mono', monospace; font-size: .57rem; color: #1e1c1a; letter-spacing: .06em; text-align: center; }
+</style>
+</head>
+<body class="bin-all">
+
+<div class="top-bar">
+  <h1>Laws, Principles &amp; Cognitive Biases</h1>
+  <div class="top-bar-right">
+    <span class="total-badge" id="total-badge">211 cards</span>
+  </div>
+</div>
+
+<!-- Bin tabs -->
+<div class="bin-nav">
+  <div class="bin-tab active-tab" data-bin="all"     onclick="switchBin('all')">
+    <span class="tab-name">All</span><span class="tab-count" id="tab-count-all">211</span>
+  </div>
+  <div class="bin-tab" data-bin="know"    onclick="switchBin('know')">
+    <span class="tab-name">Know it</span><span class="tab-count" id="tab-count-know">0</span>
+  </div>
+  <div class="bin-tab" data-bin="sort-of" onclick="switchBin('sort-of')">
+    <span class="tab-name">Sort of</span><span class="tab-count" id="tab-count-sort-of">0</span>
+  </div>
+  <div class="bin-tab" data-bin="miss"    onclick="switchBin('miss')">
+    <span class="tab-name">Missed</span><span class="tab-count" id="tab-count-miss">0</span>
+  </div>
+</div>
+
+<!-- Category filter -->
+<div class="cat-section" id="cat-section"></div>
+
+<!-- Deck bar -->
+<div class="deck-bar">
+  <span class="mode-lbl" id="mode-label">ALL CARDS &mdash; SHUFFLED</span>
+  <span class="pos-lbl" id="pos-label">1 / 211</span>
+</div>
+
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+<!-- Card -->
+<div class="scene" id="scene" onclick="flipCard()">
+  <div class="card-inner" id="card-inner">
+    <div class="face front">
+      <div class="card-meta">
+        <span class="card-type-badge" id="type-badge-front">law</span>
+        <span class="card-cat" id="cat-front"></span>
+      </div>
+      <div class="face-label">term</div>
+      <div class="divider"></div>
+      <div class="term" id="term-text"></div>
+      <div class="bin-indicator" id="bin-ind">
+        <div class="pip" id="bin-pip"></div>
+        <span id="bin-lbl"></span>
+      </div>
+      <div class="card-num" id="card-num-f">01</div>
+    </div>
+    <div class="face back">
+      <div class="face-label">definition</div>
+      <div class="divider"></div>
+      <div class="definition" id="def-text"></div>
+      <div class="card-num" id="card-num-b">01</div>
+    </div>
+  </div>
+</div>
+
+<div class="hint">click to flip &nbsp;&middot;&nbsp; space &nbsp;&middot;&nbsp; &larr;&rarr; &nbsp;&middot;&nbsp; 1=know &nbsp; 2=sort&nbsp;of &nbsp; 3=missed &nbsp; L=list</div>
+
+<div class="controls">
+  <button id="btn-prev"   onclick="go(-1)" disabled>&larr; prev</button>
+  <button id="btn-reveal" class="primary"  onclick="flipCard()">reveal</button>
+  <button id="btn-know"   class="know"     onclick="mark('know')"    style="display:none">&#10003; know it</button>
+  <button id="btn-sortof" class="sortof"   onclick="mark('sort-of')" style="display:none">&#126; sort of</button>
+  <button id="btn-miss"   class="miss"     onclick="mark('miss')"    style="display:none">&#10007; missed</button>
+  <button id="btn-next"   onclick="go(1)">next &rarr;</button>
+  <button onclick="shuffleCurrent()">&#8635; shuffle</button>
+  <button onclick="toggleDrawer()">&#9776; list</button>
+</div>
+
+<!-- Drawer -->
+<div class="bin-drawer" id="bin-drawer">
+  <div class="drawer-header">
+    <span class="drawer-title" id="drawer-title">All cards</span>
+    <input class="drawer-search" id="drawer-search" type="text" placeholder="search..." oninput="buildDrawerList()">
+    <button class="drawer-close" onclick="closeDrawer()">&#10005;</button>
+  </div>
+  <div class="bin-list" id="bin-list"></div>
+</div>
+
+<!-- End panel -->
+<div id="end-panel">
+  <h2>End of deck</h2>
+  <div class="ep-sub" id="end-sub"></div>
+  <div class="btns">
+    <button class="primary" onclick="resetAll()">reshuffle all</button>
+    <button id="btn-review-miss"   onclick="reviewBin('miss')">review missed</button>
+    <button id="btn-review-sortof" onclick="reviewBin('sort-of')">review sort of</button>
+  </div>
+</div>
+
+<footer>211 total cards &nbsp;&middot;&nbsp; 78 named laws &amp; principles &nbsp;&middot;&nbsp; 133 cognitive biases</footer>
+
+<script>
+const ALL = [{"term": "Moore's Law", "def": "The number of transistors on a microchip doubles approximately every two years, leading to exponential growth in computing power. Named after Intel co-founder Gordon Moore (1965).", "cat": "Technology & Computing", "type": "law"}, {"term": "Conway's Law", "def": "Organizations which design systems are constrained to produce designs that are copies of their own communication structures. Named after programmer Melvin Conway (1967).", "cat": "Technology & Computing", "type": "law"}, {"term": "Zipf's Law", "def": "In any large corpus, the frequency of a word is inversely proportional to its rank — the most common word appears roughly twice as often as the second most common, and so on. Named after linguist George Kingsley Zipf.", "cat": "Technology & Computing", "type": "law"}, {"term": "Amdahl's Law", "def": "The maximum possible speedup of a parallel program is limited by its sequential portion. Doubling processors never doubles speed if any part must run serially. Named after computer architect Gene Amdahl (1967).", "cat": "Technology & Computing", "type": "law"}, {"term": "Brooks's Law", "def": "Adding human resources to a late software project makes it later. Named after Fred Brooks, from The Mythical Man-Month (1975).", "cat": "Technology & Computing", "type": "law"}, {"term": "Metcalfe's Law", "def": "The value of a network is proportional to the square of the number of its users. Named after Ethernet inventor Robert Metcalfe.", "cat": "Technology & Computing", "type": "law"}, {"term": "Goodhart's Law", "def": "When a measure becomes a target, it ceases to be a good measure. Named after economist Charles Goodhart; popularized by Marilyn Strathern.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Hofstadter's Law", "def": "It always takes longer than you expect, even when you take into account Hofstadter's Law. From Douglas Hofstadter's Gödel, Escher, Bach (1979).", "cat": "Technology & Computing", "type": "law"}, {"term": "Gall's Law", "def": "A complex system that works has invariably evolved from a simple system that worked. A complex system built from scratch never works. From John Gall's Systemantics (1975).", "cat": "Named Laws: General", "type": "law"}, {"term": "Wirth's Law", "def": "Software is getting slower more rapidly than hardware is getting faster. Named after computer scientist Niklaus Wirth (1995).", "cat": "Technology & Computing", "type": "law"}, {"term": "Linus's Law", "def": "Given enough eyeballs, all bugs are shallow. Named after Linus Torvalds; coined by Eric S. Raymond in The Cathedral and the Bazaar.", "cat": "Technology & Computing", "type": "law"}, {"term": "Hyrum's Law", "def": "With a sufficient number of users of an API, it does not matter what you promise in the contract — all observable behaviors will be depended on by somebody. Named after Google engineer Hyrum Wright.", "cat": "Technology & Computing", "type": "law"}, {"term": "Kernighan's Law", "def": "Debugging is twice as hard as writing the code in the first place. Therefore, if you write the code as cleverly as possible, you are, by definition, not smart enough to debug it. Attributed to Brian Kernighan.", "cat": "Technology & Computing", "type": "law"}, {"term": "Hick's Law", "def": "The time it takes to make a decision increases logarithmically with the number of choices available. Named after psychologists William Edmund Hick and Ray Hyman.", "cat": "Technology & Computing", "type": "law"}, {"term": "Fitts's Law", "def": "The time required to move to a target is a function of the target's size and distance. Larger, closer targets are faster to hit. Named after psychologist Paul Fitts (1954).", "cat": "Technology & Computing", "type": "law"}, {"term": "Tesler's Law", "def": "Every application has an inherent amount of complexity that cannot be reduced. It can only be shifted — from the product to the user or vice versa. Named after Larry Tesler, also called the Law of Conservation of Complexity.", "cat": "Technology & Computing", "type": "law"}, {"term": "Postel's Law", "def": "Be conservative in what you send, liberal in what you accept. From Jon Postel's TCP specification; also called the Robustness Principle.", "cat": "Technology & Computing", "type": "law"}, {"term": "Koomey's Law", "def": "The energy efficiency of computation doubles roughly every 1.57 years. Named after Stanford professor Jonathan Koomey; a complement to Moore's Law.", "cat": "Technology & Computing", "type": "law"}, {"term": "Reed's Law", "def": "The utility of large networks grows exponentially with network size because of the number of possible subgroups. Named after David P. Reed. Extends Metcalfe's Law.", "cat": "Technology & Computing", "type": "law"}, {"term": "Amara's Law", "def": "We tend to overestimate the effect of a technology in the short run and underestimate the effect in the long run. Named after futurist Roy Amara.", "cat": "Physics & Science", "type": "law"}, {"term": "Parkinson's Law", "def": "Work expands so as to fill the time available for its completion. Named after historian C. Northcote Parkinson (1955).", "cat": "Management & Organizations", "type": "law"}, {"term": "Parkinson's Law of Triviality", "def": "The time spent on any agenda item is inversely proportional to its monetary value. Organizations give disproportionate weight to trivial issues. Also called the Bicycle-Shed Effect.", "cat": "Management & Organizations", "type": "law"}, {"term": "Peter Principle", "def": "In a hierarchy, every employee tends to rise to their level of incompetence. Named after Dr. Laurence J. Peter (1969).", "cat": "Management & Organizations", "type": "law"}, {"term": "Dilbert Principle", "def": "The most ineffective workers are systematically moved to the place where they can do the least damage: management. Coined by Scott Adams (1996).", "cat": "Management & Organizations", "type": "law"}, {"term": "Putt's Law", "def": "Technology is dominated by two types of people: those who understand what they do not manage, and those who manage what they do not understand. Named after Archibald Putt.", "cat": "Management & Organizations", "type": "law"}, {"term": "Dunbar's Number", "def": "There is a cognitive limit to the number of stable social relationships a person can maintain, commonly cited as approximately 150. Named after anthropologist Robin Dunbar.", "cat": "Management & Organizations", "type": "law"}, {"term": "Two-Pizza Rule", "def": "Any team should be small enough that it can be fed with two pizzas. A management heuristic associated with Jeff Bezos of Amazon.", "cat": "Management & Organizations", "type": "law"}, {"term": "Ringelmann Effect", "def": "Members of a group become less productive as group size increases. Named after French engineer Maximilien Ringelmann who studied rope-pulling experiments.", "cat": "Management & Organizations", "type": "law"}, {"term": "Pareto Principle", "def": "For many phenomena, roughly 80% of consequences stem from 20% of causes. Named after economist Vilfredo Pareto; also called the 80/20 Rule.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Occam's Razor", "def": "Among competing hypotheses, the one with the fewest assumptions should be selected. Attributed to William of Ockham (14th century); also known as the law of parsimony.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Hanlon's Razor", "def": "Never attribute to malice that which can be adequately explained by stupidity. Named after Robert J. Hanlon; a corollary of Occam's Razor.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Hitchens's Razor", "def": "What can be asserted without evidence can be dismissed without evidence. Named after journalist Christopher Hitchens.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Chesterton's Fence", "def": "Never remove a fence until you understand why it was built. A principle against unthinking reform, from G. K. Chesterton's The Thing (1929).", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Sturgeon's Law", "def": "Ninety percent of everything is crud. Named after science fiction writer Theodore Sturgeon (1958).", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Godwin's Law", "def": "As an online discussion grows longer, the probability of a comparison involving Nazis or Hitler approaches one. Named after attorney Mike Godwin (1990).", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Poe's Law", "def": "Without a clear indicator of intent, it is impossible to create a parody of extreme views that someone won't mistake for a sincere expression of those views. Named after Nathan Poe (2005).", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Cunningham's Law", "def": "The best way to get the right answer on the internet is not to ask a question but to post the wrong answer. Named after Ward Cunningham, inventor of the wiki.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Muphry's Law", "def": "If you write anything criticizing editing or proofreading, there will be a mistake of some kind in what you have written. A deliberate misspelling of Murphy's Law.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Betteridge's Law", "def": "Any news headline that ends in a question mark can be answered by the word 'No.' Named after journalist Ian Betteridge (2009).", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Planck's Principle", "def": "Scientific change does not occur because individuals are persuaded by evidence; it occurs because a new generation grows up familiar with the new paradigm. Often paraphrased as 'Science advances one funeral at a time.'", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Brandolini's Law", "def": "The amount of energy needed to refute misinformation is an order of magnitude larger than that needed to produce it. Also called the Bullshit Asymmetry Principle.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Murphy's Law", "def": "Anything that can go wrong will go wrong. Originally from aerospace engineering; popularized in the 1950s. Often attributed to Captain Edward Murphy.", "cat": "Economics & Society", "type": "law"}, {"term": "Finagle's Law", "def": "Anything that can go wrong, will — at the worst possible moment. An extension of Murphy's Law emphasizing timing.", "cat": "Economics & Society", "type": "law"}, {"term": "Hawthorne Effect", "def": "People modify their behavior when they know they are being observed. Named after Hawthorne Works factory studies in the 1920s–30s.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Jevons Paradox", "def": "Increasing the efficiency of resource use tends to increase total consumption of that resource rather than decrease it. Named after economist William Stanley Jevons (1865).", "cat": "Economics & Society", "type": "law"}, {"term": "Dunning–Kruger Effect", "def": "People with limited knowledge in a domain overestimate their competence; experts tend to underestimate theirs. Named after psychologists David Dunning and Justin Kruger (1999).", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Campbell's Law", "def": "The more a quantitative social indicator is used for decision-making, the more likely it is to distort and corrupt the social processes it was intended to monitor. Named after sociologist Donald T. Campbell.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Eroom's Law", "def": "Drug discovery has become slower and more expensive over time, despite improvements in technology. 'Eroom' is 'Moore' spelled backward, to contrast with Moore's Law.", "cat": "Technology & Computing", "type": "law"}, {"term": "Hubble's Law", "def": "Galaxies are moving away from us at speeds proportional to their distance — the universe is expanding. Named after astronomer Edwin Hubble (1929).", "cat": "Physics & Science", "type": "law"}, {"term": "Heisenberg Uncertainty Principle", "def": "The more precisely the position of a particle is determined, the less precisely its momentum can be known, and vice versa. Named after physicist Werner Heisenberg (1927).", "cat": "Physics & Science", "type": "law"}, {"term": "Pygmalion Effect", "def": "Higher expectations lead to higher performance. If a teacher or manager believes someone will succeed, that person tends to succeed. Named after George Bernard Shaw's Pygmalion; studied by Rosenthal & Jacobson.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Baader–Meinhof Phenomenon", "def": "After noticing something for the first time, you start seeing it everywhere. Also called Frequency Illusion; named after a coincidental double mention of the Baader-Meinhof Group.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Hebb's Law", "def": "Neurons that fire together wire together. A principle of synaptic plasticity formulated by neuropsychologist Donald Hebb (1949).", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Goodwin's Law", "def": "As a policy discussion grows longer, the probability of a proposal involving complete prohibition or criminalization approaches one.", "cat": "Named Laws: General", "type": "law"}, {"term": "Peltzman Effect", "def": "Safety regulations can lead to riskier behavior because people feel more protected. Named after economist Sam Peltzman (1975); also called Risk Compensation.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Osborne Effect", "def": "Premature announcement of a future product causes customers to cancel or defer orders for the current product. Named after the Osborne Computer Company.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Littlewood's Law", "def": "In the course of a normal person's life, miracles happen at a rate of roughly one per month, given a definition of 'miracle' as a one-in-a-million event. Named after mathematician J. E. Littlewood.", "cat": "Psychology & Behavior", "type": "law"}, {"term": "Zipf's Law of Abbreviation", "def": "More frequently used words tend to be shorter. A corollary of Zipf's Law, observed across many languages.", "cat": "Language & Communication", "type": "law"}, {"term": "Sapir–Whorf Hypothesis", "def": "The structure of a language affects its speakers' worldview and cognition. Also called linguistic relativity; associated with Edward Sapir and Benjamin Lee Whorf.", "cat": "Language & Communication", "type": "law"}, {"term": "Grice's Maxims", "def": "Cooperative communication follows four principles: quantity (be informative), quality (be truthful), relation (be relevant), and manner (be clear). From philosopher H. P. Grice (1975).", "cat": "Language & Communication", "type": "law"}, {"term": "Law of Leaky Abstractions", "def": "All non-trivial abstractions are leaky — the details they are supposed to hide eventually show through. Named after Joel Spolsky (2002).", "cat": "Technology & Computing", "type": "law"}, {"term": "Law of Demeter", "def": "A module should not know about the inner details of the objects it manipulates. Each unit should only talk to its immediate neighbors. Also called the Principle of Least Knowledge.", "cat": "Technology & Computing", "type": "law"}, {"term": "Pareto Efficiency", "def": "A state is Pareto efficient when no individual can be made better off without making someone else worse off. Named after economist Vilfredo Pareto.", "cat": "Economics & Society", "type": "law"}, {"term": "Unix Philosophy", "def": "Write programs that do one thing and do it well. Write programs that work together. Write programs to handle text streams, because that is a universal interface. Formulated by Ken Thompson; documented by Doug McIlroy.", "cat": "Technology & Computing", "type": "law"}, {"term": "SOLID Principles", "def": "Five object-oriented design principles: Single responsibility, Open/closed, Liskov substitution, Interface segregation, Dependency inversion. Introduced by Robert C. Martin.", "cat": "Technology & Computing", "type": "law"}, {"term": "DRY Principle", "def": "Don't Repeat Yourself: every piece of knowledge must have a single, unambiguous, authoritative representation within a system. From The Pragmatic Programmer by Andy Hunt and Dave Thomas.", "cat": "Technology & Computing", "type": "law"}, {"term": "Goodhart's Law (Design)", "def": "Optimizing for a metric causes the metric to lose validity as a measure of the underlying goal. Applies widely in UX, product, and policy design.", "cat": "Named Laws: General", "type": "law"}, {"term": "Gresham's Law", "def": "Bad money drives out good. When both debased and high-quality coins are in circulation, people hoard the valuable ones and spend the debased ones. Named after financier Thomas Gresham (16th century).", "cat": "Economics & Society", "type": "law"}, {"term": "Say's Law", "def": "Supply creates its own demand — production of goods creates income sufficient to purchase those goods. Named after economist Jean-Baptiste Say.", "cat": "Economics & Society", "type": "law"}, {"term": "Habermas's Principle", "def": "Norms are valid when all affected parties could agree to them in rational discourse. From philosopher Jürgen Habermas's discourse ethics.", "cat": "Physics & Science", "type": "law"}, {"term": "Shirky Principle", "def": "Institutions will try to preserve the problem to which they are the solution. Named after Clay Shirky.", "cat": "Management & Organizations", "type": "law"}, {"term": "Wirth's Law (Society)", "def": "The demands placed on computing resources grow faster than the supply. Coined by Niklaus Wirth; sometimes generalized to describe bloat in software and bureaucracy.", "cat": "Named Laws: General", "type": "law"}, {"term": "Conquest's Laws", "def": "Three laws of politics: (1) Everyone is conservative about what they know best. (2) Any organization not explicitly right-wing will become left-wing over time. (3) The behavior of any bureaucratic organization can best be understood by assuming that it is controlled by a cabal of its enemies. Named after historian Robert Conquest.", "cat": "Management & Organizations", "type": "law"}, {"term": "Pournelle's Iron Law", "def": "In any bureaucracy, the people devoted to the benefit of the bureaucracy itself always get in control and the mission is lost. Named after science fiction writer Jerry Pournelle.", "cat": "Management & Organizations", "type": "law"}, {"term": "Sayre's Law", "def": "In any dispute, the intensity of feeling is inversely proportional to the value of the issues at stake. Also known as the Law of Triviality or academic politics maxim.", "cat": "Economics & Society", "type": "law"}, {"term": "Segal's Law", "def": "A man with one watch knows what time it is. A man with two watches is never sure. A caution against over-measurement or conflicting data sources.", "cat": "Reasoning & Epistemology", "type": "law"}, {"term": "Berkson's Paradox", "def": "A spurious negative correlation between two independent variables can arise when conditioning on a common effect of both. Named after biostatistician Joseph Berkson.", "cat": "Economics & Society", "type": "law"}, {"term": "Price's Law", "def": "Half of the publications in a field come from the square root of its total contributors. In any domain, a small number of people produce most of the work. Named after Derek J. de Solla Price.", "cat": "Economics & Society", "type": "law"}, {"term": "Action Bias", "def": "The tendency to act when faced with a problem even when inaction would be more effective, or to act when no evident problem exists.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Actor-Observer Bias", "def": "Overemphasizing personality to explain others' behaviors while overemphasizing situation to explain one's own behaviors.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Additive Bias", "def": "The tendency to solve problems through addition, even when subtraction is a better approach.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Ambiguity Effect", "def": "The tendency to avoid options for which the probability of a favorable outcome is unknown.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Anchoring Bias", "def": "The tendency to rely too heavily on the first piece of information encountered when making decisions.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Apophenia", "def": "The tendency to perceive meaningful connections between unrelated things.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Attentional Bias", "def": "The tendency of perception to be affected by recurring thoughts.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Authority Bias", "def": "The tendency to attribute greater accuracy to the opinion of an authority figure, unrelated to its actual content.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Automation Bias", "def": "The tendency to depend excessively on automated systems, leading to erroneous automated information overriding correct decisions.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Availability Heuristic", "def": "The tendency to overestimate the likelihood of events with greater availability in memory, influenced by recency or emotional charge.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Availability Cascade", "def": "A self-reinforcing process in which a collective belief gains plausibility through its increasing repetition in public discourse.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Backfire Effect", "def": "The tendency to react to disconfirming evidence by strengthening one's previous beliefs.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Bandwagon Effect", "def": "The tendency to do or believe things because many other people do or believe the same.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Base Rate Fallacy", "def": "The tendency to ignore general information and focus on information only pertaining to the specific case, even when the general information is more important.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Belief Bias", "def": "An effect where someone's evaluation of the logical strength of an argument is biased by the believability of the conclusion.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Ben Franklin Effect", "def": "A person who has performed a favor for someone is more likely to do another favor for that person than if they had received a favor.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Bias Blind Spot", "def": "The tendency to see oneself as less biased than other people, or to identify more cognitive biases in others than in oneself.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Cheerleader Effect", "def": "The tendency for people to appear more attractive in a group than in isolation.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Choice-Supportive Bias", "def": "The tendency to remember one's choices as better than they actually were.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Clustering Illusion", "def": "The tendency to overestimate the importance of small runs, streaks, or clusters in large samples of random data.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Compassion Fade", "def": "The tendency to behave more compassionately towards a small number of identifiable victims than to a large number of anonymous ones.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Confirmation Bias", "def": "The tendency to search for, interpret, focus on, and remember information in a way that confirms one's preconceptions.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Conjunction Fallacy", "def": "The tendency to assume that specific conditions are more probable than a more general version of those same conditions.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Context Effect", "def": "The phenomenon that cognition and memory are dependent on context, making out-of-context memories more difficult to retrieve.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Contrast Effect", "def": "The enhancement or reduction of a stimulus's perception when compared with a recently observed, contrasting object.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Curse of Knowledge", "def": "When better-informed people find it extremely difficult to think about problems from the perspective of lesser-informed people.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Declinism", "def": "The predisposition to view the past favorably and the future negatively.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Default Effect", "def": "The tendency to favor the default option when given a choice between several options.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Denomination Effect", "def": "The tendency to spend more money when it is denominated in small amounts rather than large amounts.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Dunning–Kruger Effect", "def": "The tendency for unskilled individuals to overestimate their own ability and for experts to underestimate their own ability.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Duration Neglect", "def": "The neglect of the duration of an episode in determining its overall value or impact.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Effort Justification", "def": "The tendency to attribute greater value to an outcome if effort was required to achieve it. Also known as the IKEA effect.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Egocentric Bias", "def": "The tendency to rely too heavily on one's own perspective and to have a different perception of oneself relative to others.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Endowment Effect", "def": "The tendency for people to demand much more to give up an object than they would be willing to pay to acquire it.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Escalation of Commitment", "def": "The tendency to justify increased investment in a decision based on prior investment, despite new evidence suggesting the decision was wrong. Also: sunk cost fallacy.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "False Consensus Effect", "def": "The tendency for people to overestimate the degree to which others agree with them.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Forer / Barnum Effect", "def": "The tendency for individuals to give high accuracy ratings to vague personality descriptions supposedly tailored for them but actually applicable to anyone.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Framing Effect", "def": "The tendency to draw different conclusions from the same information depending on how that information is presented.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Frequency Illusion", "def": "Once something has been noticed, every instance of that thing is noticed, creating the belief it occurs with high frequency. Also known as Baader–Meinhof phenomenon.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Fundamental Attribution Error", "def": "The tendency to overemphasize personality-based explanations for others' behaviors while underemphasizing the role of situational influences.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "G.I. Joe Fallacy", "def": "The tendency to think that knowing about cognitive bias is enough to overcome it.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Gambler's Fallacy", "def": "The tendency to think that future probabilities are altered by past events, when in reality they are unchanged.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Google Effect", "def": "The tendency to forget information that can be found readily online by using internet search engines.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Groupthink", "def": "The psychological phenomenon within a group where the desire for harmony results in irrational decision-making by suppressing dissenting viewpoints.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Halo Effect", "def": "The tendency for a person's positive or negative traits to spill over from one personality area to another in others' perceptions.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Hindsight Bias", "def": "The inclination to see past events as having been predictable before they happened. Also called the 'I-knew-it-all-along' effect.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Hot-Cold Empathy Gap", "def": "The tendency to underestimate the influence of visceral drives on one's attitudes, preferences, and behaviors.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Hyperbolic Discounting", "def": "The tendency for people to have a stronger preference for more immediate payoffs relative to later payoffs, leading to time-inconsistent choices.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Illusion of Control", "def": "The tendency to overestimate one's degree of influence over external events.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Illusion of Explanatory Depth", "def": "The tendency to believe that one understands a topic much better than one actually does.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Illusion of Transparency", "def": "The tendency to overestimate the degree to which one's personal mental state is known by others.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Illusory Correlation", "def": "The tendency to inaccurately perceive a relationship between two unrelated events.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Illusory Superiority", "def": "The tendency to overestimate one's desirable qualities and underestimate undesirable qualities relative to others. Also known as the Lake Wobegon effect.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Illusory Truth Effect", "def": "The tendency to believe a statement is true if it is easier to process or has been stated multiple times, regardless of its actual veracity.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Impact Bias", "def": "The tendency to overestimate the length or intensity of the impact of future feeling states.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Impostor Syndrome", "def": "A psychological occurrence in which an individual doubts their skills, talents, or accomplishments and has a persistent internalized fear of being exposed as a fraud.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Information Bias", "def": "The tendency to seek information even when it cannot affect action.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Insensitivity to Sample Size", "def": "The tendency to under-expect variation in small samples.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Intentionality Bias", "def": "The tendency to judge human action to be intentional rather than accidental.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Interoceptive Bias", "def": "The tendency for sensory input about the body itself to affect one's judgment about external, unrelated circumstances. Also called the Hungry Judge Effect.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Just-World Hypothesis", "def": "The tendency for people to want to believe that the world is fundamentally just, causing them to rationalize an inexplicable injustice as deserved by the victim.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Law of the Instrument", "def": "An over-reliance on a familiar tool or method, ignoring alternative approaches. 'If all you have is a hammer, everything looks like a nail.'", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Less-Is-Better Effect", "def": "The tendency to prefer a smaller set to a larger set when judged separately, but not when judged jointly.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Loss Aversion", "def": "The perceived disutility of giving up an object is greater than the utility associated with acquiring it.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Mere Exposure Effect", "def": "The tendency to express undue liking for things merely because of familiarity with them. Also called the familiarity principle.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Misinformation Effect", "def": "Memory becoming less accurate because of interference from post-event information.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Money Illusion", "def": "The tendency to concentrate on the nominal face value of money rather than its value in terms of purchasing power.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Mood-Congruent Memory Bias", "def": "The improved recall of information congruent with one's current mood. Also called state-dependent memory.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Moral Credential Effect", "def": "Occurs when someone who does something good gives themselves permission to be less good in the future.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Naïve Cynicism", "def": "Expecting more egocentric bias in others than in oneself.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Naïve Realism", "def": "The belief that we see reality as it really is — objectively and without bias — and that those who disagree are uninformed, lazy, irrational, or biased.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Negativity Bias", "def": "The psychological phenomenon by which humans have a greater recall of unpleasant memories compared with positive memories.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Neglect of Probability", "def": "The tendency to completely disregard probability when making a decision under uncertainty.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Normalcy Bias", "def": "The refusal to plan for a disaster which has never happened before.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Objectivity Illusion", "def": "The tendency to believe that one is more objective and unbiased than others, while being unable to see this bias in oneself.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Omission Bias", "def": "The tendency to judge harmful actions (commissions) as worse or less moral than equally harmful inactions (omissions).", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Optimism Bias", "def": "The tendency to be over-optimistic, underestimating the probability of undesirable outcomes and overestimating favorable ones.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Ostrich Effect", "def": "Ignoring an obvious negative situation.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Outcome Bias", "def": "The tendency to judge a decision by its eventual outcome instead of the quality of the decision at the time it was made.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Outgroup Homogeneity Bias", "def": "The tendency to see members of other groups as less varied than members of one's own group.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Overconfidence Effect", "def": "The tendency to have excessive confidence in one's own answers. Answers rated '99% certain' can turn out to be wrong 40% of the time.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Pareidolia", "def": "The tendency to perceive a vague and random stimulus as significant — for example, seeing faces in clouds or the man in the Moon.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Peak–End Rule", "def": "People seem to perceive not the sum of an experience but the average of how it was at its peak and how it ended.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Pessimism Bias", "def": "The tendency, especially in those with depression, to overestimate the likelihood of negative things happening to them.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Plan Continuation Bias", "def": "Failure to recognize that the original plan of action is no longer appropriate for a changing or different-than-anticipated situation.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Planning Fallacy", "def": "The tendency for people to underestimate the time it will take them to complete a given task.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Pro-Innovation Bias", "def": "The tendency to have excessive optimism toward an invention's usefulness throughout society, while failing to identify its limitations.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Projection Bias", "def": "The tendency to overestimate how much one's future self will share one's current preferences, leading to suboptimal choices.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Proportionality Bias", "def": "The innate tendency to assume that big events have big causes, which may explain the acceptance of conspiracy theories.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Pseudocertainty Effect", "def": "The tendency to make risk-averse choices when the expected outcome is positive, but risk-seeking choices to avoid negative outcomes.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Pygmalion Effect", "def": "The phenomenon whereby others' expectations of a target person affect that person's performance.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Reactance", "def": "The urge to do the opposite of what someone wants out of a need to resist a perceived attempt to constrain one's freedom of choice.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Reactive Devaluation", "def": "Devaluing proposals only because they purportedly originated with an adversary.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Recency Illusion", "def": "The illusion that a phenomenon noticed recently is itself recent, when it is in fact long-established.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Restraint Bias", "def": "The tendency to overestimate one's ability to show restraint in the face of temptation.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Rhyme as Reason Effect", "def": "The tendency to perceive rhyming statements as more truthful.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Risk Compensation", "def": "The tendency to take greater risks when perceived safety increases. Also called the Peltzman effect.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Rosy Retrospection", "def": "The tendency to remember the past as having been better than it really was.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Salience Bias", "def": "The tendency to focus on items that are more prominent or emotionally striking and ignore those that are unremarkable, even when the difference is irrelevant.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Scope Neglect", "def": "The tendency to be insensitive to the size of a problem when evaluating it — for example, being equally willing to pay to save 2,000 or 20,000 children.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Selection Bias", "def": "When the members of a statistical sample are not chosen completely at random, making the sample unrepresentative of the population.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Self-Serving Bias", "def": "The tendency to claim more responsibility for successes than failures, and to evaluate ambiguous information in a way beneficial to one's own interests.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Semmelweis Reflex", "def": "The tendency to reject new evidence that contradicts a paradigm.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Sexual Overperception Bias", "def": "The tendency to overestimate sexual interest of another person in oneself; the opposite is sexual underperception bias.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Social Desirability Bias", "def": "The tendency to over-report socially desirable characteristics or behaviours in oneself and under-report socially undesirable ones.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Spacing Effect", "def": "Information is better recalled if exposure to it is repeated over a long span of time rather than a short one.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Spotlight Effect", "def": "The tendency to overestimate the amount that other people notice one's appearance or behavior.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Status Quo Bias", "def": "The tendency to prefer things to stay relatively the same.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Stereotyping", "def": "Expecting a member of a group to have certain characteristics without having actual information about that individual.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Subadditivity Effect", "def": "The tendency to judge the probability of the whole to be less than the probabilities of the parts.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Survivorship Bias", "def": "Concentrating on the people or things that 'survived' some process and overlooking those that did not because of their lack of visibility.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "System Justification", "def": "The tendency to defend and bolster the status quo, preferring existing social, economic, and political arrangements even at the expense of self-interest.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Telescoping Effect", "def": "The tendency to displace recent events backwards in time and remote events forward in time, making recent events seem more remote and vice versa.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Testing Effect", "def": "Information is more easily recalled when one rewrites it rather than simply rereading it; frequent testing improves memory recall.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Third-Person Effect", "def": "The tendency to believe that mass-communicated media messages have a greater effect on others than on themselves.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Time-Saving Bias", "def": "The tendency to underestimate time saved when increasing from a low speed, and to overestimate time saved when increasing from a relatively high speed.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Tip of the Tongue Phenomenon", "def": "When a subject can recall parts of an item or related information but cannot recall the whole item, due to similar memories interfering with each other.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Trait Ascription Bias", "def": "The tendency to view oneself as relatively variable in personality, behavior, and mood while viewing others as much more predictable.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Travis Syndrome", "def": "Overestimating the significance of the present moment, related to chronological snobbery and possibly the appeal-to-novelty fallacy.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Truth Bias", "def": "People's inclination to believe, to some degree, the communication of another person regardless of whether that person is actually being untruthful.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Turkey Illusion", "def": "The absence of expectation of sudden trend breaks in continuous developments.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Ultimate Attribution Error", "def": "Similar to the fundamental attribution error, a person makes an internal attribution to an entire group instead of the individuals within the group.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Unconscious Bias", "def": "Underlying attitudes and stereotypes that people unconsciously attribute to another person or group, affecting how they understand and engage with them. Also called implicit bias.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Unit Bias", "def": "The standard suggested amount of consumption is perceived to be appropriate, and a person would consume it all even if it is too much for them.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Verbatim Effect", "def": "The 'gist' of what someone has said is better remembered than the verbatim wording, because memories are representations, not exact copies.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Von Restorff Effect", "def": "An item that sticks out is more likely to be remembered than other items.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Weber–Fechner Law", "def": "The difficulty in comparing small differences in large quantities.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Well-Traveled Road Effect", "def": "The tendency to underestimate the duration taken to traverse oft-traveled routes and overestimate duration on less familiar routes.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Women-Are-Wonderful Effect", "def": "A tendency to associate more positive attributes with women than with men.", "cat": "Cognitive Biases: Social & Attribution", "type": "bias"}, {"term": "Worse-Than-Average Effect", "def": "The tendency to believe oneself to be worse than others at tasks which are difficult.", "cat": "Cognitive Biases: Perception & Reasoning", "type": "bias"}, {"term": "Zeigarnik Effect", "def": "Uncompleted or interrupted tasks are remembered better than completed ones.", "cat": "Cognitive Biases: Memory", "type": "bias"}, {"term": "Zero-Risk Bias", "def": "The preference for reducing a small risk to zero over a greater reduction in a larger risk.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}, {"term": "Zero-Sum Bias", "def": "A situation is incorrectly perceived to be like a zero-sum game, where one person gains only at the expense of another.", "cat": "Cognitive Biases: Decision-Making", "type": "bias"}];
+
+
+const BIN_META = {
+  "know":    { label:"know it",  pipClass:"green",  color:"#4a7c59" },
+  "sort-of": { label:"sort of",  pipClass:"yellow", color:"#c8a84b" },
+  "miss":    { label:"missed",   pipClass:"red",    color:"#b06060" }
+};
+const PIP_COLORS = { "know":"#4a7c59", "sort-of":"#c8a84b", "miss":"#b06060", "null":"#2e2c28" };
+const BIN_ORDER = ["know","sort-of","miss",null];
+const BIN_HEADS = { "know":"Know it", "sort-of":"Sort of", "miss":"Missed", "null":"Unsorted" };
+
+const bins = {};
+let deck = [], idx = 0, flipped = false, animating = false;
+let activeBin = "all", activeCat = "all", drawerOpen = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function filteredAll() {
+  if (activeCat === "all") return ALL;
+  if (activeCat === "__laws__")  return ALL.filter(c => c.type === "law");
+  if (activeCat === "__biases__") return ALL.filter(c => c.type === "bias");
+  return ALL.filter(c => c.cat === activeCat);
+}
+
+function deckForBin(bin) {
+  const base = filteredAll();
+  if (bin === "all") return shuffle([...base]);
+  return shuffle(base.filter(c => bins[c.term] === bin));
+}
+
+function getCounts() {
+  const c = { know:0, "sort-of":0, miss:0, unsorted:0 };
+  filteredAll().forEach(card => {
+    const v = bins[card.term];
+    if (v) c[v] = (c[v]||0)+1; else c.unsorted++;
+  });
+  return c;
+}
+
+function current() { return deck[idx]; }
+
+function render() {
+  if (!deck.length) {
+    document.getElementById("term-text").textContent = "No cards in this view.";
+    document.getElementById("def-text").textContent  = "";
+    return;
+  }
+  const c      = current();
+  const binVal = bins[c.term] || null;
+  const num    = String(idx+1).padStart(2,"0");
+
+  document.getElementById("term-text").textContent  = c.term;
+  document.getElementById("def-text").textContent   = c.def;
+  document.getElementById("card-num-f").textContent = num;
+  document.getElementById("card-num-b").textContent = num;
+  document.getElementById("cat-front").textContent  = c.cat;
+
+  const tb = document.getElementById("type-badge-front");
+  tb.textContent = c.type === "law" ? "law / principle" : "cognitive bias";
+  tb.className   = "card-type-badge " + c.type;
+
+  const ind = document.getElementById("bin-ind");
+  const pip = document.getElementById("bin-pip");
+  const lbl = document.getElementById("bin-lbl");
+  if (binVal && BIN_META[binVal]) {
+    ind.classList.add("visible");
+    pip.className   = "pip " + BIN_META[binVal].pipClass;
+    lbl.textContent = BIN_META[binVal].label;
+    lbl.style.color = BIN_META[binVal].color;
+  } else { ind.classList.remove("visible"); }
+
+  const pct = Math.round((idx / deck.length) * 100);
+  const pf  = document.getElementById("progress-fill");
+  pf.style.width = pct + "%";
+  pf.className   = "progress-fill" +
+    (activeBin==="know" ? " green" : activeBin==="miss" ? " red" : activeBin==="sort-of" ? " yellow" : "");
+
+  document.getElementById("pos-label").textContent  = (idx+1) + " / " + deck.length;
+  document.getElementById("card-inner").className   = "card-inner" + (flipped ? " flipped" : "");
+  document.body.className = "bin-" + (activeBin === "all" ? "all" : activeBin);
+
+  document.getElementById("btn-prev").disabled = idx === 0 || animating;
+  document.getElementById("btn-next").disabled = idx === deck.length-1 || animating;
+  ["btn-reveal","btn-know","btn-sortof","btn-miss"].forEach(function(id) {
+    document.getElementById(id).style.display = "none";
+  });
+  if (flipped) {
+    ["btn-know","btn-sortof","btn-miss"].forEach(function(id) {
+      document.getElementById(id).style.display = "";
+    });
+  } else {
+    document.getElementById("btn-reveal").style.display = "";
+  }
+
+  const ct = getCounts();
+  const base = filteredAll();
+  document.getElementById("tab-count-all").textContent     = base.length;
+  document.getElementById("tab-count-know").textContent    = ct.know    || 0;
+  document.getElementById("tab-count-sort-of").textContent = ct["sort-of"] || 0;
+  document.getElementById("tab-count-miss").textContent    = ct.miss    || 0;
+
+  document.querySelectorAll(".bin-tab").forEach(function(t) {
+    t.classList.toggle("active-tab", t.dataset.bin === activeBin);
+  });
+  document.querySelectorAll(".cat-chip").forEach(function(ch) {
+    ch.classList.toggle("active-cat", ch.dataset.cat === activeCat);
+  });
+
+  var modeMap = {
+    "all":"ALL CARDS \u2014 SHUFFLED", "know":"KNOW IT", "sort-of":"SORT OF", "miss":"MISSED"
+  };
+  document.getElementById("mode-label").textContent = modeMap[activeBin] || activeBin.toUpperCase();
+
+  const isLast = idx === deck.length - 1;
+  const ep = document.getElementById("end-panel");
+  if (isLast) {
+    ep.style.display = "block";
+    document.getElementById("end-sub").textContent =
+      (ct.know||0) + " know \u00b7 " + (ct["sort-of"]||0) + " sort of \u00b7 " +
+      (ct.miss||0) + " missed \u00b7 " + (ct.unsorted||0) + " unsorted";
+    document.getElementById("btn-review-miss").style.display   = (ct.miss||0)>0   ? "" : "none";
+    document.getElementById("btn-review-sortof").style.display = (ct["sort-of"]||0)>0 ? "" : "none";
+  } else { ep.style.display = "none"; }
+
+  if (drawerOpen) buildDrawerList();
+}
+
+function flipCard() {
+  if (animating) return;
+  flipped = !flipped;
+  render();
+}
+
+function go(dir) {
+  if (animating) return;
+  const scene = document.getElementById("scene");
+  scene.classList.add(dir > 0 ? "slide-left" : "slide-right");
+  animating = true;
+  setTimeout(function() {
+    scene.classList.remove("slide-left","slide-right");
+    idx = Math.max(0, Math.min(deck.length-1, idx+dir));
+    flipped = false; animating = false;
+    render();
+  }, 200);
+}
+
+function mark(bin) {
+  if (animating) return;
+  bins[current().term] = bin;
+  render();
+  setTimeout(function() { go(1); }, 300);
+}
+
+function switchBin(bin) {
+  const nd = deckForBin(bin);
+  if (!nd.length) return;
+  activeBin = bin; deck = nd; idx = 0; flipped = false;
+  render();
+}
+
+function switchCat(cat) {
+  activeCat = cat; activeBin = "all";
+  deck = deckForBin("all"); idx = 0; flipped = false;
+  render();
+}
+
+function shuffleCurrent() {
+  const currentTerm = deck.length ? deck[idx].term : null;
+  deck = shuffle([...deck]);
+  // Keep position at same card if possible
+  if (currentTerm) {
+    const newIdx = deck.findIndex(function(c) { return c.term === currentTerm; });
+    idx = newIdx >= 0 ? newIdx : 0;
+  } else { idx = 0; }
+  flipped = false;
+  render();
+}
+
+function resetAll() {
+  Object.keys(bins).forEach(function(k) { delete bins[k]; });
+  activeBin = "all"; activeCat = "all";
+  deck = shuffle([...ALL]); idx = 0; flipped = false;
+  render();
+}
+
+function reviewBin(bin) {
+  const d = deckForBin(bin);
+  if (!d.length) return;
+  activeBin = bin; deck = d; idx = 0; flipped = false;
+  document.getElementById("end-panel").style.display = "none";
+  render();
+}
+
+function toggleDrawer() { drawerOpen ? closeDrawer() : openDrawer(); }
+function openDrawer()   { drawerOpen = true;  document.getElementById("bin-drawer").classList.add("open"); buildDrawerList(); }
+function closeDrawer()  { drawerOpen = false; document.getElementById("bin-drawer").classList.remove("open"); }
+
+function esc(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function buildDrawerList() {
+  const q = (document.getElementById("drawer-search").value || "").toLowerCase().trim();
+  var titleMap = { "all":"All Cards", "know":"Know It", "sort-of":"Sort Of", "miss":"Missed" };
+  document.getElementById("drawer-title").textContent = titleMap[activeBin] || activeBin;
+  const groups = {};
+  BIN_ORDER.forEach(function(b) { groups[b] = []; });
+  deck.forEach(function(card, i) {
+    if (q && card.term.toLowerCase().indexOf(q) === -1) return;
+    const bv = bins[card.term] || null;
+    if (!groups[bv]) groups[bv] = [];
+    groups[bv].push({ card: card, deckIdx: i });
+  });
+  var html = "";
+  BIN_ORDER.forEach(function(bv) {
+    const items = groups[bv] || [];
+    if (!items.length) return;
+    html += '<div class="bin-section-head">' + BIN_HEADS[bv] + ' (' + items.length + ')</div>';
+    items.forEach(function(item) {
+      const isCur = item.deckIdx === idx;
+      const pipColor = PIP_COLORS[bv] || PIP_COLORS["null"];
+      html += '<button class="bin-item' + (isCur ? ' current-card' : '') +
+        '" onclick="jumpTo(' + item.deckIdx + ')">' +
+        '<span class="item-pip" style="background:' + pipColor + '"></span>' +
+        '<span class="item-num">' + String(item.deckIdx+1).padStart(2,"0") + '</span>' +
+        '<span class="item-type ' + item.card.type + '">' + (item.card.type==="law"?"law":"bias") + '</span>' +
+        esc(item.card.term) +
+        '<span class="item-cat">' + esc(item.card.cat) + '</span>' +
+        '</button>';
+    });
+  });
+  if (!html) html = '<div style="padding:.8rem 1rem;font-family:\'DM Mono\',monospace;font-size:.65rem;color:#3a3830">No results</div>';
+  document.getElementById("bin-list").innerHTML = html;
+}
+
+function jumpTo(i) {
+  if (animating) return;
+  idx = i; flipped = false;
+  closeDrawer();
+  render();
+}
+
+// ── Build category chips ──
+(function() {
+  const section = document.getElementById("cat-section");
+
+  function makeChip(label, catKey, typeClass) {
+    const chip = document.createElement("div");
+    chip.className = "cat-chip" + (typeClass ? " " + typeClass : "");
+    chip.dataset.cat = catKey;
+    chip.textContent = label;
+    chip.onclick = function() { switchCat(catKey); };
+    return chip;
+  }
+
+  // "All" chip
+  var allRow = document.createElement("div"); allRow.className = "cat-row";
+  allRow.appendChild(makeChip("All (" + ALL.length + ")", "all", ""));
+  allRow.appendChild(makeChip("All Laws (" + ALL.filter(c=>c.type==="law").length + ")", "__laws__", "type-law"));
+  allRow.appendChild(makeChip("All Biases (" + ALL.filter(c=>c.type==="bias").length + ")", "__biases__", "type-bias"));
+  section.appendChild(allRow);
+
+  // Laws group
+  var lawLabel = document.createElement("div"); lawLabel.className = "cat-group-label";
+  lawLabel.textContent = "Laws & Principles";
+  section.appendChild(lawLabel);
+  var lawRow = document.createElement("div"); lawRow.className = "cat-row";
+  var lawCats = [...new Set(ALL.filter(c=>c.type==="law").map(c=>c.cat))].sort();
+  lawCats.forEach(function(cat) {
+    const cnt = ALL.filter(c=>c.cat===cat).length;
+    lawRow.appendChild(makeChip(cat + " (" + cnt + ")", cat, "type-law"));
+  });
+  section.appendChild(lawRow);
+
+  // Biases group
+  var biasLabel = document.createElement("div"); biasLabel.className = "cat-group-label";
+  biasLabel.textContent = "Cognitive Biases";
+  section.appendChild(biasLabel);
+  var biasRow = document.createElement("div"); biasRow.className = "cat-row";
+  var biasCats = [...new Set(ALL.filter(c=>c.type==="bias").map(c=>c.cat))].sort();
+  biasCats.forEach(function(cat) {
+    const cnt = ALL.filter(c=>c.cat===cat).length;
+    biasRow.appendChild(makeChip(cat + " (" + cnt + ")", cat, "type-bias"));
+  });
+  section.appendChild(biasRow);
+})();
+
+// ── Keyboard ──
+document.addEventListener("keydown", function(e) {
+  if (e.target === document.getElementById("drawer-search")) return;
+  if (e.key === " " || e.key === "Enter") { e.preventDefault(); flipCard(); }
+  if (e.key === "ArrowRight") go(1);
+  if (e.key === "ArrowLeft")  go(-1);
+  if (e.key === "1" && flipped) mark("know");
+  if (e.key === "2" && flipped) mark("sort-of");
+  if (e.key === "3" && flipped) mark("miss");
+  if (e.key === "l" || e.key === "L") toggleDrawer();
+});
+
+deck = shuffle([...ALL]);
+render();
+</script>
+</body>
+</html>
