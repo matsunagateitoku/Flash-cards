@@ -260,7 +260,10 @@ footer { margin-top: 2rem; font-family: 'DM Mono', monospace; font-size: .72rem;
 </div>
 
 <!-- Category filter -->
-<div class="cat-section" id="cat-section"></div>
+<div class="cat-section-wrap">
+  <button class="cat-toggle" id="cat-toggle" onclick="toggleCats()">&#9660; filter by category</button>
+  <div class="cat-section" id="cat-section" style="display:none"></div>
+</div>
 
 <!-- Deck bar -->
 <div class="deck-bar">
