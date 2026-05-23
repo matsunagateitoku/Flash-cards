@@ -62,6 +62,9 @@ body {
 .bin-tab.active-tab[data-bin="sort-of"] { background: #faf5e8; border-color: #9a7820; }
 .bin-tab.active-tab[data-bin="miss"]    { background: #fae8e8; border-color: #8a3838; }
 .bin-tab.active-tab[data-bin="all"]     { background: #eeebe5; border-color: #706858; }
+.bin-tab[data-bin="due"]     .tab-name  { color: #3a6080; }
+.bin-tab[data-bin="due"]     .tab-count { color: #2d4f66; }
+.bin-tab.active-tab[data-bin="due"]     { background: #e8f0f8; border-color: #3a6080; }
 
 /* ── Category filter ── */
 .cat-section { width: 100%; max-width: 720px; margin-bottom: .8rem; }
@@ -129,6 +132,7 @@ body {
 body.bin-know    .face::before { background: #3a8a54; }
 body.bin-sort-of .face::before { background: #9a7820; }
 body.bin-miss    .face::before { background: #8a3838; }
+body.bin-due     .face::before { background: #3a6080; }
 
 .face-label { font-family: 'DM Mono', monospace; font-size: .75rem; color: #8a8278; letter-spacing: .1em; text-transform: uppercase; }
 .card-meta {
@@ -267,6 +271,9 @@ footer { margin-top: 2rem; font-family: 'DM Mono', monospace; font-size: .72rem;
   <div class="bin-tab" data-bin="miss"    onclick="switchBin('miss')">
     <span class="tab-name">Missed</span><span class="tab-count" id="tab-count-miss">0</span>
   </div>
+  <div class="bin-tab" data-bin="due"    onclick="switchBin('due')">
+    <span class="tab-name">Due</span><span class="tab-count" id="tab-count-due">0</span>
+  </div>
 </div>
 
 <!-- Category filter -->
@@ -304,6 +311,7 @@ footer { margin-top: 2rem; font-family: 'DM Mono', monospace; font-size: .72rem;
       <div class="face-label">definition</div>
       <div class="divider"></div>
       <div class="definition" id="def-text"></div>
+      <div id="sr-info" style="margin-top:.9rem;font-family:'DM Mono',monospace;font-size:.7rem;color:#a09888;letter-spacing:.06em;display:none;"></div>
       <div class="card-num" id="card-num-b">01</div>
     </div>
   </div>
@@ -359,8 +367,37 @@ const BIN_ORDER = ["know","sort-of","miss",null];
 const BIN_HEADS = { "know":"Know it", "sort-of":"Sort of", "miss":"Missed", "null":"Unsorted" };
 
 const bins = {};
+const srData = {};
 let deck = [], idx = 0, flipped = false, animating = false;
 let activeBin = "all", activeCat = "all", drawerOpen = false;
+
+function saveProgress() {
+  try { localStorage.setItem('fc_state', JSON.stringify({ bins, srData })); } catch(e) {}
+}
+
+function loadProgress() {
+  try {
+    const raw = localStorage.getItem('fc_state');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (s.bins)   Object.assign(bins, s.bins);
+    if (s.srData) Object.assign(srData, s.srData);
+  } catch(e) {}
+}
+
+function sm2(term, quality) {
+  const d = srData[term] || { interval: 0, ef: 2.5, reviews: 0 };
+  let { interval, ef, reviews } = d;
+  ef = Math.max(1.3, ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+  if (quality < 3) {
+    interval = 1; reviews = 0;
+  } else {
+    interval = reviews === 0 ? 1 : reviews === 1 ? 6 : Math.round(interval * ef);
+    reviews++;
+  }
+  const due = new Date(); due.setDate(due.getDate() + interval);
+  srData[term] = { interval, ef, reviews, dueDate: due.toISOString().split('T')[0] };
+}
 
 function shuffle(arr) {
   const a = [...arr];
@@ -381,14 +418,21 @@ function filteredAll() {
 function deckForBin(bin) {
   const base = filteredAll();
   if (bin === "all") return shuffle([...base]);
+  if (bin === "due") {
+    const today = new Date().toISOString().split('T')[0];
+    return shuffle(base.filter(c => { const d = srData[c.term]; return d && d.dueDate <= today; }));
+  }
   return shuffle(base.filter(c => bins[c.term] === bin));
 }
 
 function getCounts() {
-  const c = { know:0, "sort-of":0, miss:0, unsorted:0 };
+  const today = new Date().toISOString().split('T')[0];
+  const c = { know:0, "sort-of":0, miss:0, unsorted:0, due:0 };
   filteredAll().forEach(card => {
     const v = bins[card.term];
     if (v) c[v] = (c[v]||0)+1; else c.unsorted++;
+    const d = srData[card.term];
+    if (d && d.dueDate <= today) c.due++;
   });
   return c;
 }
@@ -425,11 +469,23 @@ function render() {
     lbl.style.color = BIN_META[binVal].color;
   } else { ind.classList.remove("visible"); }
 
+  const srEl = document.getElementById("sr-info");
+  const srd = srData[c.term];
+  if (srd && flipped) {
+    const todayMs = new Date(new Date().toISOString().split('T')[0]).getTime();
+    const daysLeft = Math.round((new Date(srd.dueDate).getTime() - todayMs) / 86400000);
+    const msg = daysLeft < 0 ? "overdue by "+(-daysLeft)+" day"+(-daysLeft!==1?"s":"")
+              : daysLeft === 0 ? "due today"
+              : "next review in "+daysLeft+" day"+(daysLeft!==1?"s":"");
+    srEl.textContent = "reviewed "+srd.reviews+"× · "+msg;
+    srEl.style.display = "";
+  } else { srEl.style.display = "none"; }
+
   const pct = Math.round((idx / deck.length) * 100);
   const pf  = document.getElementById("progress-fill");
   pf.style.width = pct + "%";
   pf.className   = "progress-fill" +
-    (activeBin==="know" ? " green" : activeBin==="miss" ? " red" : activeBin==="sort-of" ? " yellow" : "");
+    (activeBin==="know" ? " green" : activeBin==="miss" ? " red" : activeBin==="sort-of" ? " yellow" : activeBin==="due" ? " blue" : "");
 
   document.getElementById("pos-label").textContent  = (idx+1) + " / " + deck.length;
   document.getElementById("card-inner").className   = "card-inner" + (flipped ? " flipped" : "");
@@ -454,6 +510,7 @@ function render() {
   document.getElementById("tab-count-know").textContent    = ct.know    || 0;
   document.getElementById("tab-count-sort-of").textContent = ct["sort-of"] || 0;
   document.getElementById("tab-count-miss").textContent    = ct.miss    || 0;
+  document.getElementById("tab-count-due").textContent     = ct.due     || 0;
 
   document.querySelectorAll(".bin-tab").forEach(function(t) {
     t.classList.toggle("active-tab", t.dataset.bin === activeBin);
@@ -463,7 +520,7 @@ function render() {
   });
 
   var modeMap = {
-    "all":"ALL CARDS \u2014 SHUFFLED", "know":"KNOW IT", "sort-of":"SORT OF", "miss":"MISSED"
+    "all":"ALL CARDS \u2014 SHUFFLED", "know":"KNOW IT", "sort-of":"SORT OF", "miss":"MISSED", "due":"DUE FOR REVIEW"
   };
   document.getElementById("mode-label").textContent = modeMap[activeBin] || activeBin.toUpperCase();
 
@@ -502,7 +559,10 @@ function go(dir) {
 
 function mark(bin) {
   if (animating) return;
+  const q = bin === "know" ? 5 : bin === "sort-of" ? 3 : 1;
   bins[current().term] = bin;
+  sm2(current().term, q);
+  saveProgress();
   render();
   setTimeout(function() { go(1); }, 300);
 }
@@ -534,6 +594,8 @@ function shuffleCurrent() {
 
 function resetAll() {
   Object.keys(bins).forEach(function(k) { delete bins[k]; });
+  Object.keys(srData).forEach(function(k) { delete srData[k]; });
+  saveProgress();
   activeBin = "all"; activeCat = "all";
   deck = shuffle([...ALL]); idx = 0; flipped = false;
   render();
@@ -662,6 +724,7 @@ function toggleCats() {
   btn.classList.toggle("open", open);
 }
 
+loadProgress();
 deck = shuffle([...ALL]);
 render();
 </script>
